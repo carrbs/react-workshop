@@ -1,8 +1,51 @@
 import React, { PropTypes } from 'react';
+import ReactDOM from 'react-dom';
+import { createStore } from 'redux';
+import { connect } from 'react-redux';
 import 'normalize.css';
 
 // Import CSS and favicon
 import './App.css';
+
+const incrementAction = { type: 'INCREMENT' };
+const decrementAction = { type: 'DECREMENT' };
+
+const initialCounterState = { count: 0 };
+
+function adjustCountReducer(state = initialCounterState, action) {
+  if (action.type === 'INCREMENT') {
+      const newState = Object.assign({}, state);
+      newState.count += 1;
+      return newState;
+  } else if ( action.type === 'DECREMENT' && state.count != 0) {
+      const newState = Object.assign({}, state);
+      newState.count -= 1;
+      return newState;
+  }
+  return state;
+};
+
+
+export const store = createStore(adjustCountReducer);
+
+const mapDispatchToProps = dispatch => {
+    return {
+        onIncrement: () => dispatch(incrementAction),
+        onDecrement: () => dispatch(decrementAction)
+    };
+};
+
+const mapStateToProps = state => {
+    return {
+        count: state.count
+    };
+};
+
+const createConnectedComponent = connect(
+    mapStateToProps,
+    mapDispatchToProps
+);
+
 
 class Counter extends React.Component {
   static propTypes = {
@@ -27,10 +70,9 @@ class Counter extends React.Component {
   }
 }
 
+const ConnectedCounter = createConnectedComponent(Counter);
+
 export class App extends React.Component {
-  state = {
-    count: 0,
-  };
 
   constructor(props) {
     super(props);
@@ -41,17 +83,6 @@ export class App extends React.Component {
     document.removeEventListener('keydown', this.handleKeyDown);
   }
 
-  onIncrement = () => {
-    const { count } = this.state;
-    this.setState({ count: count + 1 });
-  };
-
-  onDecrement = () => {
-    const { count } = this.state;
-    if (count === 0) return; // Don't go below zero
-    this.setState({ count: count - 1 });
-  };
-
   handleKeyDown = (e) => {
     const LEFT = 37;
     const RIGHT = 39;
@@ -59,9 +90,10 @@ export class App extends React.Component {
     const DOWN = 40;
 
     if (e.which === LEFT || e.which === DOWN) {
-      return this.onDecrement();
+      console.log('this.props', this.props)
+      return this.props.onDecrement();
     } else if (e.which === RIGHT || e.which === UP) {
-      return this.onIncrement();
+      return this.props.onIncrement();
     } else {
       return; // Do nothing
     }
@@ -70,11 +102,10 @@ export class App extends React.Component {
   render() {
     return (
       <div className='App'>
-        <Counter
-          onIncrement={this.onIncrement}
-          onDecrement={this.onDecrement}
-          count={this.state.count} />
-      </div>
+        <ConnectedCounter />
+     </div>
     );
   }
 }
+
+export const ConnectedApp = createConnectedComponent(App);
